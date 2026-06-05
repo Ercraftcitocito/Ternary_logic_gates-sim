@@ -1,0 +1,1 @@
+# Ternary_logic_gates-sim
