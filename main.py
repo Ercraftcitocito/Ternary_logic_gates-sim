@@ -16,7 +16,7 @@ def ternary_max(a, b):
     return max(a, b)
 
 
-COLORS = {-1: "#d9534f", 0: "#888888", 1: "#5cb85c"}
+COLORS = {-1: "#ff6b6b", 0: "#9aa0a6", 1: "#6fdc99"}
 
 # -------- NODOS --------
 
@@ -33,18 +33,18 @@ class Gate:
         self.inputs_count = 1 if gate_type == "NOT" else 2
         self.input_wires = [None] * self.inputs_count
 
-        self.rect = app.canvas.create_rectangle(x, y, x + 90, y + 50, fill="#f5f5f5")
-        self.text = app.canvas.create_text(x + 45, y + 25, text=gate_type)
+        self.rect = app.canvas.create_rectangle(x, y, x + 90, y + 50, fill="#eef6ff", outline="#1e40af", width=2)
+        self.text = app.canvas.create_text(x + 45, y + 25, text=gate_type, font=("Helvetica", 10, "bold"), fill="#0f172a")
 
         # draw input ports on the left
         self.input_ports = []
         for i in range(self.inputs_count):
             py = y + int((i + 1) * (50 / (self.inputs_count + 1)))
-            port = app.canvas.create_oval(x - 6, py - 6, x + 6, py + 6, fill="#ffffff", outline="#000000")
+            port = app.canvas.create_oval(x - 6, py - 6, x + 6, py + 6, fill="#f8fafc", outline="#1e293b")
             self.input_ports.append(port)
 
         # output port on the right
-        self.output_port = app.canvas.create_oval(x + 90 - 6, y + 25 - 6, x + 90 + 6, y + 25 + 6, fill="#ffffff", outline="#000000")
+        self.output_port = app.canvas.create_oval(x + 90 - 6, y + 25 - 6, x + 90 + 6, y + 25 + 6, fill="#f8fafc", outline="#1e293b")
 
         self.items = [self.rect, self.text] + self.input_ports + [self.output_port]
 
@@ -65,12 +65,12 @@ class InputNode:
         self.value = 0
 
         self.rect = app.canvas.create_rectangle(
-            x, y, x + 90, y + 50, fill=COLORS[self.value]
+            x, y, x + 90, y + 50, fill=COLORS[self.value], outline="#0f172a", width=2
         )
-        self.text = app.canvas.create_text(x + 45, y + 25, text=f"{name}\n0")
+        self.text = app.canvas.create_text(x + 45, y + 25, text=f"{name}\n0", font=("Helvetica", 10), fill="#0f172a")
 
         # output port on right
-        self.output_port = app.canvas.create_oval(x + 90 - 6, y + 25 - 6, x + 90 + 6, y + 25 + 6, fill="#ffffff", outline="#000000")
+        self.output_port = app.canvas.create_oval(x + 90 - 6, y + 25 - 6, x + 90 + 6, y + 25 + 6, fill="#f8fafc", outline="#1e293b")
 
         self.items = [self.rect, self.text, self.output_port]
 
@@ -87,13 +87,13 @@ class OutputNode:
         self.value = 0
 
         self.rect = app.canvas.create_rectangle(
-            x, y, x + 90, y + 50, fill=COLORS[self.value]
+            x, y, x + 90, y + 50, fill=COLORS[self.value], outline="#0f172a", width=2
         )
-        self.text = app.canvas.create_text(x + 45, y + 25, text=f"{name}\n0")
+        self.text = app.canvas.create_text(x + 45, y + 25, text=f"{name}\n0", font=("Helvetica", 10), fill="#0f172a")
 
         # single input port on left
         self.input_wires = [None]
-        self.input_port = app.canvas.create_oval(x - 6, y + 25 - 6, x + 6, y + 25 + 6, fill="#ffffff", outline="#000000")
+        self.input_port = app.canvas.create_oval(x - 6, y + 25 - 6, x + 6, y + 25 + 6, fill="#f8fafc", outline="#1e293b")
 
         self.items = [self.rect, self.text, self.input_port]
 
@@ -110,7 +110,7 @@ class Simulator:
         self.root = root
         root.title("Simulador Lógico Ternario")
 
-        self.canvas = tk.Canvas(root, bg="white")
+        self.canvas = tk.Canvas(root, bg="#f8fafc", highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
 
         self.bottom = tk.Frame(root)
@@ -131,11 +131,11 @@ class Simulator:
         self.connect_source = None
         self.temp_line = None
 
-        tk.Button(self.bottom, text="Entrada", command=self.add_input).pack(side="left")
+        tk.Button(self.bottom, text="Entrada", command=self.add_input, bg="#2563eb", fg="white", activebackground="#1e40af", relief="flat", padx=8).pack(side="left")
 
-        tk.Button(self.bottom, text="Salida", command=self.add_output).pack(side="left")
+        tk.Button(self.bottom, text="Salida", command=self.add_output, bg="#2563eb", fg="white", activebackground="#1e40af", relief="flat", padx=8).pack(side="left")
 
-        tk.Button(self.bottom, text="Guardar puerta", command=self.save_gate).pack(
+        tk.Button(self.bottom, text="Guardar puerta", command=self.save_gate, bg="#2563eb", fg="white", activebackground="#1e40af", relief="flat", padx=8).pack(
             side="left"
         )
 
@@ -159,8 +159,8 @@ class Simulator:
 
         for gate in self.library:
             tk.Button(
-                self.libframe, text=gate, command=lambda g=gate: self.add_gate(g)
-            ).pack(side="left")
+                self.libframe, text=gate, command=lambda g=gate: self.add_gate(g), bg="#e2e8f0", relief="flat", padx=6, pady=2
+            ).pack(side="left", padx=4)
 
     def add_gate(self, gate):
         self.nodes.append(Gate(self, 250, 100, gate))
@@ -234,6 +234,43 @@ class Simulator:
     def release(self, event):
         self.drag_node = None
 
+    def find_nearest_input_port(self, x, y, exclude_node=None, max_dist=120):
+        best = None
+        best_node = None
+        best_idx = None
+        best_px = None
+        best_py = None
+        maxd2 = max_dist * max_dist
+        for node in self.nodes:
+            # skip nodes that are the excluded one
+            if node == exclude_node:
+                continue
+            if isinstance(node, Gate):
+                for i in range(node.inputs_count):
+                    px, py = node.get_input_point(i)
+                    d2 = (px - x) ** 2 + (py - y) ** 2
+                    # only consider free slots
+                    if node.input_wires[i] is not None:
+                        continue
+                    if d2 <= maxd2 and (best is None or d2 < best):
+                        best = d2
+                        best_node = node
+                        best_idx = i
+                        best_px = px
+                        best_py = py
+            elif isinstance(node, OutputNode):
+                px, py = node.get_input_point(0)
+                d2 = (px - x) ** 2 + (py - y) ** 2
+                if node.input_wires and node.input_wires[0] is not None:
+                    continue
+                if d2 <= maxd2 and (best is None or d2 < best):
+                    best = d2
+                    best_node = node
+                    best_idx = 0
+                    best_px = px
+                    best_py = py
+        return best_node, best_idx, best_px, best_py
+
     def start_connect(self, event):
         # if clicked on an existing wire -> delete it
         item = self.canvas.find_closest(event.x, event.y)
@@ -267,13 +304,20 @@ class Simulator:
             return
 
         # create temporary line that follows cursor
-        self.temp_line = self.canvas.create_line(sx, sy, event.x, event.y, width=2, dash=(4, 2), fill="#000", tags="temp")
+        self.temp_line = self.canvas.create_line(sx, sy, event.x, event.y, width=3, dash=(4, 2), fill="#334155", tags="temp")
 
     def connect_drag(self, event):
-        if self.temp_line:
-            coords = self.canvas.coords(self.temp_line)
-            # update end point
-            self.canvas.coords(self.temp_line, coords[0], coords[1], event.x, event.y)
+        if not self.temp_line:
+            return
+        # try to snap to nearest input port
+        dst_node, dst_idx, px, py = self.find_nearest_input_port(event.x, event.y, exclude_node=self.connect_source, max_dist=100)
+        coords = self.canvas.coords(self.temp_line)
+        sx, sy = coords[0], coords[1]
+        if dst_node is not None and px is not None:
+            ex, ey = px, py
+        else:
+            ex, ey = event.x, event.y
+        self.canvas.coords(self.temp_line, sx, sy, ex, ey)
 
     def end_connect(self, event):
         if not self.connect_source:
@@ -283,36 +327,30 @@ class Simulator:
                 self.temp_line = None
             return
 
-        dst = self.node_at(event.x, event.y)
         src = self.connect_source
+        # snap to nearest input port within a larger radius
+        dst_node, dst_idx, px, py = self.find_nearest_input_port(event.x, event.y, exclude_node=src, max_dist=160)
 
-        # cannot connect to self or to input nodes
-        if dst is None or dst == src or isinstance(dst, InputNode):
+        if dst_node is None:
+            # no suitable port nearby -> cancel
             if self.temp_line:
                 self.canvas.delete(self.temp_line)
                 self.temp_line = None
             self.connect_source = None
             return
 
-        # determine destination input index
-        dst_idx = 0
-        if isinstance(dst, Gate):
-            # choose nearest input port
-            best = None
-            best_i = 0
-            for i in range(dst.inputs_count):
-                px, py = dst.get_input_point(i)
-                d = (px - event.x) ** 2 + (py - event.y) ** 2
-                if best is None or d < best:
-                    best = d
-                    best_i = i
-            dst_idx = best_i
-        elif isinstance(dst, OutputNode):
-            dst_idx = 0
+        dst = dst_node
 
-        # check slot free
+        # prevent connecting to input nodes or to self
+        if isinstance(dst, InputNode) or dst == src:
+            if self.temp_line:
+                self.canvas.delete(self.temp_line)
+                self.temp_line = None
+            self.connect_source = None
+            return
+
+        # check slot free (redundant because find_nearest_input_port checked, but keep safety)
         if getattr(dst, "input_wires", [None])[dst_idx] is not None:
-            # slot occupied
             if self.temp_line:
                 self.canvas.delete(self.temp_line)
                 self.temp_line = None
@@ -361,7 +399,10 @@ class Simulator:
             else:
                 dx, dy = dst.x, dst.y + 25
 
-            iid = self.canvas.create_line(sx, sy, dx, dy, width=3, fill=color, tags="wire", arrow=tk.LAST)
+            iid = self.canvas.create_line(sx, sy, dx, dy, width=4, fill=color, tags="wire", arrow=tk.LAST, smooth=True)
+            # give a subtle shadow line behind for depth
+            # second lighter line under it (drawn first)
+            # note: keep single item mapping for deletion/selection
             self.wire_items[iid] = (src, dst, dst_idx)
 
     def double_click(self, event):
