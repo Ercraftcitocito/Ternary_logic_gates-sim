@@ -206,6 +206,29 @@ class Simulator:
         self.canvas.coords(n.rect, n.x, n.y, n.x + 90, n.y + 50)
         self.canvas.coords(n.text, n.x + 45, n.y + 25)
 
+        # update any ports to move with the node
+        if isinstance(n, Gate):
+            for i, port_id in enumerate(n.input_ports):
+                py = n.y + int((i + 1) * (50 / (n.inputs_count + 1)))
+                try:
+                    self.canvas.coords(port_id, n.x - 6, py - 6, n.x + 6, py + 6)
+                except Exception:
+                    pass
+            try:
+                self.canvas.coords(n.output_port, n.x + 90 - 6, n.y + 25 - 6, n.x + 90 + 6, n.y + 25 + 6)
+            except Exception:
+                pass
+        elif isinstance(n, InputNode):
+            try:
+                self.canvas.coords(n.output_port, n.x + 90 - 6, n.y + 25 - 6, n.x + 90 + 6, n.y + 25 + 6)
+            except Exception:
+                pass
+        elif isinstance(n, OutputNode):
+            try:
+                self.canvas.coords(n.input_port, n.x - 6, n.y + 25 - 6, n.x + 6, n.y + 25 + 6)
+            except Exception:
+                pass
+
         self.redraw_connections()
 
     def release(self, event):
