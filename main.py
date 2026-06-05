@@ -22,7 +22,13 @@ COLORS = {-1: "#ff6b6b", 0: "#9aa0a6", 1: "#6fdc99"}
 
 
 class Gate:
-    def __init__(self, app, x, y, gate_type):
+    def __init__(self, app, x, y, gate_type, hidden=False):
+        self.app = app
+        self.x = x
+        self.y = y
+        self.gate_type = gate_type
+        self.value = 0
+        self.hidden = hidden
         self.app = app
         self.x = x
         self.y = y
@@ -40,13 +46,28 @@ class Gate:
         self.input_ports = []
         for i in range(self.inputs_count):
             py = y + int((i + 1) * (50 / (self.inputs_count + 1)))
-            port = app.canvas.create_oval(x - 6, py - 6, x + 6, py + 6, fill="#f8fafc", outline="#1e293b")
+            if not hidden:
+                port = app.canvas.create_oval(x - 6, py - 6, x + 6, py + 6, fill="#f8fafc", outline="#1e293b")
+            else:
+                port = None
             self.input_ports.append(port)
 
         # output port on the right
-        self.output_port = app.canvas.create_oval(x + 90 - 6, y + 25 - 6, x + 90 + 6, y + 25 + 6, fill="#f8fafc", outline="#1e293b")
+        if not hidden:
+            self.output_port = app.canvas.create_oval(x + 90 - 6, y + 25 - 6, x + 90 + 6, y + 25 + 6, fill="#f8fafc", outline="#1e293b")
+        else:
+            self.output_port = None
 
-        self.items = [self.rect, self.text] + self.input_ports + [self.output_port]
+        # collect visible items
+        self.items = [self.rect, self.text] + [p for p in self.input_ports if p is not None] + ([self.output_port] if self.output_port is not None else [])
+
+        # register ports with app for hit-testing
+        for i, port in enumerate(self.input_ports):
+            if port is not None:
+                app.register_port(port, self, 'input', i, mapped_node=None)
+        if self.output_port is not None:
+            app.register_port(self.output_port, self, 'output', 0, mapped_node=self)
+
 
     def get_output_point(self):
         return (self.x + 90, self.y + 25)
@@ -57,45 +78,58 @@ class Gate:
 
 
 class InputNode:
-    def __init__(self, app, x, y, name):
+    def __init__(self, app, x, y, name, hidden=False):
         self.app = app
         self.x = x
         self.y = y
         self.name = name
         self.value = 0
+        self.hidden = hidden
 
-        self.rect = app.canvas.create_rectangle(
-            x, y, x + 90, y + 50, fill=COLORS[self.value], outline="#0f172a", width=2
-        )
-        self.text = app.canvas.create_text(x + 45, y + 25, text=f"{name}\n0", font=("Helvetica", 10), fill="#0f172a")
+        if not hidden:
+            self.rect = app.canvas.create_rectangle(
+                x, y, x + 90, y + 50, fill=COLORS[self.value], outline="#0f172a", width=2
+            )
+            self.text = app.canvas.create_text(x + 45, y + 25, text=f"{name}\n0", font=("Helvetica", 10), fill="#0f172a")
+            # output port on right
+            self.output_port = app.canvas.create_oval(x + 90 - 6, y + 25 - 6, x + 90 + 6, y + 25 + 6, fill="#f8fafc", outline="#1e293b")
+            self.items = [self.rect, self.text, self.output_port]
+            app.register_port(self.output_port, self, 'output', 0, mapped_node=self)
+        else:
+            self.rect = None
+            self.text = None
+            self.output_port = None
+            self.items = []
 
-        # output port on right
-        self.output_port = app.canvas.create_oval(x + 90 - 6, y + 25 - 6, x + 90 + 6, y + 25 + 6, fill="#f8fafc", outline="#1e293b")
-
-        self.items = [self.rect, self.text, self.output_port]
-
-    def get_output_point(self):
+    def get_output_point(self, idx=0):
         return (self.x + 90, self.y + 25)
 
 
 class OutputNode:
-    def __init__(self, app, x, y, name):
+    def __init__(self, app, x, y, name, hidden=False):
         self.app = app
         self.x = x
         self.y = y
         self.name = name
         self.value = 0
+        self.hidden = hidden
 
-        self.rect = app.canvas.create_rectangle(
-            x, y, x + 90, y + 50, fill=COLORS[self.value], outline="#0f172a", width=2
-        )
-        self.text = app.canvas.create_text(x + 45, y + 25, text=f"{name}\n0", font=("Helvetica", 10), fill="#0f172a")
-
-        # single input port on left
-        self.input_wires = [None]
-        self.input_port = app.canvas.create_oval(x - 6, y + 25 - 6, x + 6, y + 25 + 6, fill="#f8fafc", outline="#1e293b")
-
-        self.items = [self.rect, self.text, self.input_port]
+        if not hidden:
+            self.rect = app.canvas.create_rectangle(
+                x, y, x + 90, y + 50, fill=COLORS[self.value], outline="#0f172a", width=2
+            )
+            self.text = app.canvas.create_text(x + 45, y + 25, text=f"{name}\n0", font=("Helvetica", 10), fill="#0f172a")
+            # single input port on left
+            self.input_wires = [None]
+            self.input_port = app.canvas.create_oval(x - 6, y + 25 - 6, x + 6, y + 25 + 6, fill="#f8fafc", outline="#1e293b")
+            self.items = [self.rect, self.text, self.input_port]
+            app.register_port(self.input_port, self, 'input', 0, mapped_node=self)
+        else:
+            self.rect = None
+            self.text = None
+            self.input_wires = [None]
+            self.input_port = None
+            self.items = []
 
     def get_input_point(self, idx=0):
         return (self.x, self.y + 25)
@@ -124,9 +158,14 @@ class Simulator:
         # map canvas wire id -> (src, dst, dst_idx)
         self.wire_items = {}
 
+        self.port_map = {}  # canvas item id -> (owner, type, idx, mapped_node)
+        self.templates = {}  # saved gates
+
         self.drag_node = None
         self.drag_dx = 0
         self.drag_dy = 0
+
+        self.selected_node = None
 
         self.connect_source = None
         self.temp_line = None
@@ -152,6 +191,62 @@ class Simulator:
         self.canvas.bind("<B3-Motion>", self.connect_drag)
         self.canvas.bind("<ButtonRelease-3>", self.end_connect)
         self.canvas.bind("<Double-Button-1>", self.double_click)
+        # delete selected node with Delete key
+        root.bind('<Delete>', self.delete_selected)
+
+
+    def register_port(self, item_id, owner, ptype, idx, mapped_node=None):
+        # item_id: canvas id of port oval
+        self.port_map[item_id] = (owner, ptype, idx, mapped_node)
+
+    def delete_selected(self, event=None):
+        if not self.selected_node:
+            return
+        node = self.selected_node
+        # remove related connections
+        to_remove = []
+        for c in list(self.connections):
+            src, dst, idx = c
+            if src == node or dst == node:
+                to_remove.append(c)
+        for c in to_remove:
+            try:
+                self.connections.remove(c)
+            except Exception:
+                pass
+        # delete canvas items
+        for it in getattr(node, 'items', []):
+            if it:
+                try:
+                    self.canvas.delete(it)
+                except Exception:
+                    pass
+                # also clear port_map entries
+                if it in self.port_map:
+                    try:
+                        del self.port_map[it]
+                    except Exception:
+                        pass
+        # if composite, delete its internal nodes as well
+        if hasattr(node, 'internal_nodes'):
+            for n in list(node.internal_nodes):
+                if n in self.nodes:
+                    try:
+                        for it in getattr(n, 'items', []):
+                            if it:
+                                self.canvas.delete(it)
+                    except Exception:
+                        pass
+                    try:
+                        self.nodes.remove(n)
+                    except Exception:
+                        pass
+        try:
+            self.nodes.remove(node)
+        except Exception:
+            pass
+        self.selected_node = None
+        self.redraw_connections()
 
     def refresh_library(self):
         for w in self.libframe.winfo_children():
@@ -161,8 +256,15 @@ class Simulator:
             tk.Button(
                 self.libframe, text=gate, command=lambda g=gate: self.add_gate(g), bg="#e2e8f0", relief="flat", padx=6, pady=2
             ).pack(side="left", padx=4)
+        # show saved templates
+        for name in self.templates.keys():
+            tk.Button(self.libframe, text=name, command=lambda n=name: self.add_gate(n), bg="#fde68a", relief="flat", padx=6, pady=2).pack(side="left", padx=4)
 
     def add_gate(self, gate):
+        # if gate is a saved template, instantiate composite
+        if gate in self.templates:
+            self.instantiate_template(gate, 250, 100)
+            return
         self.nodes.append(Gate(self, 250, 100, gate))
 
     def add_input(self):
@@ -174,21 +276,40 @@ class Simulator:
         self.nodes.append(OutputNode(self, 850, 50 + n * 80, f"OUT{n + 1}"))
 
     def node_at(self, x, y):
+        # returns (node, hit) where hit is dict with type: 'body'/'input'/'output' and index
         item = self.canvas.find_closest(x, y)
         if not item:
-            return None
+            return None, None
+        iid = item[0]
 
-        item = item[0]
+        # check if clicked on a registered port
+        if iid in self.port_map:
+            owner, ptype, idx, mapped = self.port_map[iid]
+            return owner, {'type': ptype, 'index': idx, 'item': iid, 'mapped': mapped}
 
+        # fallback: find node by item membership
         for node in self.nodes:
-            if item in node.items:
-                return node
-        return None
+            if getattr(node, 'items', None) and iid in node.items:
+                return node, {'type': 'body', 'index': None, 'item': iid}
+
+        return None, None
 
     def left_click(self, event):
-        node = self.node_at(event.x, event.y)
+        node, hit = self.node_at(event.x, event.y)
 
         if node:
+            # select and start dragging
+            self.selected_node = node
+            # visual highlight
+            try:
+                for n in self.nodes:
+                    if hasattr(n, 'rect') and n.rect:
+                        self.canvas.itemconfig(n.rect, width=2)
+                if hasattr(node, 'rect') and node.rect:
+                    self.canvas.itemconfig(node.rect, width=4)
+            except Exception:
+                pass
+
             self.drag_node = node
             self.drag_dx = event.x - node.x
             self.drag_dy = event.y - node.y
@@ -282,6 +403,7 @@ class Simulator:
                 if (src, dst, idx) in self.connections:
                     self.connections.remove((src, dst, idx))
                 try:
+                    # if dst is an internal input node created by composite
                     dst.input_wires[idx] = None
                 except Exception:
                     pass
@@ -289,20 +411,30 @@ class Simulator:
                 self.evaluate()
                 return
 
-        node = self.node_at(event.x, event.y)
+        node, hit = self.node_at(event.x, event.y)
         if node is None:
             return
 
-        # start a new connection from node
-        self.connect_source = node
-        sx, sy = None, None
-        if hasattr(node, "get_output_point"):
-            sx, sy = node.get_output_point()
+        # if clicked on an output port, start from the mapped node
+        start_node = node
+        sx = event.x
+        sy = event.y
+        if hit and hit.get('type') == 'output':
+            mapped = hit.get('mapped')
+            if mapped is not None:
+                start_node = mapped
+            # get precise port center
+            coords = self.canvas.coords(hit.get('item'))
+            if coords:
+                sx = (coords[0] + coords[2]) / 2
+                sy = (coords[1] + coords[3]) / 2
         else:
             # nodes without output cannot start a connection
-            self.connect_source = None
-            return
+            if not hasattr(node, 'get_output_point'):
+                return
+            sx, sy = node.get_output_point()
 
+        self.connect_source = start_node
         # create temporary line that follows cursor
         self.temp_line = self.canvas.create_line(sx, sy, event.x, event.y, width=3, dash=(4, 2), fill="#334155", tags="temp")
 
@@ -349,20 +481,37 @@ class Simulator:
             self.connect_source = None
             return
 
-        # check slot free (redundant because find_nearest_input_port checked, but keep safety)
-        if getattr(dst, "input_wires", [None])[dst_idx] is not None:
-            if self.temp_line:
-                self.canvas.delete(self.temp_line)
-                self.temp_line = None
-            self.connect_source = None
-            return
+        # If dst is a composite-like object that exposes internal_inputs, map connection to internal node
+        if hasattr(dst, 'internal_inputs'):
+            internal = dst.internal_inputs[dst_idx]
+            # check free
+            if internal.input_wires[0] is not None:
+                if self.temp_line:
+                    self.canvas.delete(self.temp_line)
+                    self.temp_line = None
+                self.connect_source = None
+                return
+            # create connection to internal node instead
+            self.connections.append((src, internal, 0))
+            try:
+                internal.input_wires[0] = src
+            except Exception:
+                pass
+        else:
+            # check slot free (redundant because find_nearest_input_port checked, but keep safety)
+            if getattr(dst, "input_wires", [None])[dst_idx] is not None:
+                if self.temp_line:
+                    self.canvas.delete(self.temp_line)
+                    self.temp_line = None
+                self.connect_source = None
+                return
 
-        # create connection
-        self.connections.append((src, dst, dst_idx))
-        try:
-            dst.input_wires[dst_idx] = src
-        except Exception:
-            pass
+            # create connection
+            self.connections.append((src, dst, dst_idx))
+            try:
+                dst.input_wires[dst_idx] = src
+            except Exception:
+                pass
 
         # cleanup temp line
         if self.temp_line:
@@ -392,22 +541,19 @@ class Simulator:
             else:
                 sx, sy = src.x + 90, src.y + 25
 
-            if isinstance(dst, Gate):
-                dx, dy = dst.get_input_point(dst_idx)
-            elif isinstance(dst, OutputNode):
+            if hasattr(dst, 'get_input_point'):
                 dx, dy = dst.get_input_point(dst_idx)
             else:
                 dx, dy = dst.x, dst.y + 25
 
+            # draw a subtle shadow as background
+            self.canvas.create_line(sx+1, sy+1, dx+1, dy+1, width=6, fill="#cbd5e1", tags="wire_ghost", smooth=True)
             iid = self.canvas.create_line(sx, sy, dx, dy, width=4, fill=color, tags="wire", arrow=tk.LAST, smooth=True)
-            # give a subtle shadow line behind for depth
-            # second lighter line under it (drawn first)
-            # note: keep single item mapping for deletion/selection
             self.wire_items[iid] = (src, dst, dst_idx)
 
     def double_click(self, event):
 
-        node = self.node_at(event.x, event.y)
+        node, hit = self.node_at(event.x, event.y)
 
         if isinstance(node, InputNode):
             values = [-1, 0, 1]
@@ -415,9 +561,11 @@ class Simulator:
             idx = values.index(node.value)
             node.value = values[(idx + 1) % 3]
 
-            self.canvas.itemconfig(node.rect, fill=COLORS[node.value])
+            if node.rect:
+                self.canvas.itemconfig(node.rect, fill=COLORS[node.value])
 
-            self.canvas.itemconfig(node.text, text=f"{node.name}\n{node.value}")
+            if node.text:
+                self.canvas.itemconfig(node.text, text=f"{node.name}\n{node.value}")
 
             self.evaluate()
 
@@ -427,6 +575,7 @@ class Simulator:
             return [s for s in target.input_wires if s is not None]
         if isinstance(target, OutputNode):
             return [target.input_wires[0]] if target.input_wires and target.input_wires[0] is not None else []
+        # composite internal input nodes will be handled as normal nodes (they have input_wires)
 
         # fallback: scan connections
         result = []
@@ -438,7 +587,7 @@ class Simulator:
     def evaluate(self):
 
         for _ in range(10):
-            for node in self.nodes:
+            for node in list(self.nodes):
                 if isinstance(node, Gate):
                     ins = self.incoming(node)
                     vals = [x.value for x in ins]
@@ -454,7 +603,8 @@ class Simulator:
 
                     # update gate visual to reflect value
                     try:
-                        self.canvas.itemconfig(node.rect, fill=COLORS[node.value])
+                        if not getattr(node, 'hidden', False) and node.rect:
+                            self.canvas.itemconfig(node.rect, fill=COLORS[node.value])
                     except Exception:
                         pass
 
@@ -464,23 +614,196 @@ class Simulator:
                     if ins:
                         node.value = ins[0].value
 
-                        self.canvas.itemconfig(node.rect, fill=COLORS[node.value])
+                        if not getattr(node, 'hidden', False) and node.rect:
+                            self.canvas.itemconfig(node.rect, fill=COLORS[node.value])
 
-                        self.canvas.itemconfig(
-                            node.text, text=f"{node.name}\n{node.value}"
-                        )
+                        if node.text:
+                            self.canvas.itemconfig(
+                                node.text, text=f"{node.name}\n{node.value}"
+                            )
 
         self.redraw_connections()
 
+    def instantiate_template(self, name, x, y):
+        tpl = self.templates.get(name)
+        if not tpl:
+            return
+        specs = tpl['nodes']
+        conns = tpl['conns']
+
+        # create composite visual container
+        inputs = sum(1 for s in specs if s['type'] == 'Input')
+        outputs = sum(1 for s in specs if s['type'] == 'Output')
+
+        comp = Composite(self, x, y, name, inputs, outputs)
+        self.nodes.append(comp)
+
+        # create internal nodes (hidden) and map index
+        created = []
+        for s in specs:
+            sx = x + s.get('x', 0)
+            sy = y + s.get('y', 0)
+            if s['type'] == 'Gate':
+                n = Gate(self, sx, sy, s.get('gate_type', 'G'), hidden=True)
+            elif s['type'] == 'Input':
+                n = InputNode(self, sx, sy, s.get('name', 'IN'), hidden=True)
+            elif s['type'] == 'Output':
+                n = OutputNode(self, sx, sy, s.get('name', 'OUT'), hidden=True)
+            else:
+                n = Gate(self, sx, sy, 'G', hidden=True)
+            self.nodes.append(n)
+            created.append(n)
+
+        # create connections among internal nodes
+        for c in conns:
+            si = c['src']
+            di = c['dst']
+            idx = c['idx']
+            if 0 <= si < len(created) and 0 <= di < len(created):
+                src = created[si]
+                dst = created[di]
+                # if dst is an OutputNode, use its input index 0
+                if isinstance(dst, OutputNode):
+                    self.connections.append((src, dst, 0))
+                    try:
+                        dst.input_wires[0] = src
+                    except Exception:
+                        pass
+                elif isinstance(dst, Gate):
+                    self.connections.append((src, dst, idx))
+                    try:
+                        dst.input_wires[idx] = src
+                    except Exception:
+                        pass
+
+        # map composite external ports to internal nodes
+        int_inputs = [n for n in created if isinstance(n, InputNode)]
+        int_outputs = [n for n in created if isinstance(n, OutputNode)]
+        comp.internal_inputs = int_inputs
+        comp.internal_outputs = int_outputs
+
+        # register composite ports to map to internal nodes
+        for i, pid in enumerate(comp.input_ports):
+            if pid is not None:
+                # map input port to internal input node
+                mapped = None
+                if i < len(int_inputs):
+                    mapped = int_inputs[i]
+                self.register_port(pid, comp, 'input', i, mapped_node=mapped)
+        for i, pid in enumerate(comp.output_ports):
+            if pid is not None:
+                mapped = None
+                if i < len(int_outputs):
+                    mapped = int_outputs[i]
+                self.register_port(pid, comp, 'output', i, mapped_node=mapped)
+
+        # done
+
     def save_gate(self):
-
         name = simpledialog.askstring("Nueva puerta", "Nombre:")
-
         if not name:
             return
 
-        self.library.append(name)
+        # serialize current workspace nodes and connections
+        # determine bounding box
+        if not self.nodes:
+            return
+
+        xs = [n.x for n in self.nodes]
+        ys = [n.y for n in self.nodes]
+        minx, miny = min(xs), min(ys)
+
+        node_index = {n: i for i, n in enumerate(self.nodes)}
+        specs = []
+        for n in self.nodes:
+            if isinstance(n, Gate):
+                specs.append({'type': 'Gate', 'gate_type': n.gate_type, 'x': n.x - minx, 'y': n.y - miny, 'inputs_count': n.inputs_count})
+            elif isinstance(n, InputNode):
+                specs.append({'type': 'Input', 'name': n.name, 'x': n.x - minx, 'y': n.y - miny})
+            elif isinstance(n, OutputNode):
+                specs.append({'type': 'Output', 'name': n.name, 'x': n.x - minx, 'y': n.y - miny})
+            else:
+                specs.append({'type': 'Unknown'})
+
+        conns = []
+        for src, dst, idx in self.connections:
+            conns.append({'src': node_index.get(src, -1), 'dst': node_index.get(dst, -1), 'idx': idx})
+
+        self.templates[name] = {'nodes': specs, 'conns': conns}
+
+        # add to library buttons
+        if name not in self.library:
+            self.library.append(name)
         self.refresh_library()
+
+        # reset workspace: clear all items and start fresh with 1 input and 1 output
+        # delete canvas items
+        for n in self.nodes:
+            for it in getattr(n, 'items', []):
+                if it:
+                    try:
+                        self.canvas.delete(it)
+                    except Exception:
+                        pass
+        for iid in list(self.wire_items.keys()):
+            try:
+                self.canvas.delete(iid)
+            except Exception:
+                pass
+        self.nodes = []
+        self.connections = []
+        self.wire_items = {}
+        self.port_map = {}
+
+        # new workspace baseline: one input and one output
+        self.add_input()
+        self.add_output()
+
+        # ensure library updated
+        self.refresh_library()
+
+
+# Composite node class near other classes
+
+class Composite:
+    def __init__(self, app, x, y, name, inputs, outputs):
+        self.app = app
+        self.x = x
+        self.y = y
+        self.name = name
+        self.inputs_count = inputs
+        self.outputs_count = outputs
+        self.internal_inputs = []
+        self.internal_outputs = []
+        self.internal_nodes = []
+
+        # visual container
+        self.rect = app.canvas.create_rectangle(x, y, x + 140, y + max(60, inputs * 30, outputs * 30), fill="#f1f5f9", outline="#0f172a", width=2)
+        self.text = app.canvas.create_text(x + 70, y + 15, text=name, font=("Helvetica", 10, "bold"), fill="#0f172a")
+
+        # create input ports
+        self.input_ports = []
+        for i in range(inputs):
+            py = y + int((i + 1) * (50 / (inputs + 1))) + 10
+            pid = app.canvas.create_oval(x - 6, py - 6, x + 6, py + 6, fill="#f8fafc", outline="#1e293b")
+            self.input_ports.append(pid)
+
+        # create output ports
+        self.output_ports = []
+        for i in range(outputs):
+            py = y + int((i + 1) * (50 / (outputs + 1))) + 10
+            pid = app.canvas.create_oval(x + 140 - 6, py - 6, x + 140 + 6, py + 6, fill="#f8fafc", outline="#1e293b")
+            self.output_ports.append(pid)
+
+        self.items = [self.rect, self.text] + self.input_ports + self.output_ports
+
+    def get_output_point(self, idx=0):
+        py = self.y + int((idx + 1) * (50 / (self.outputs_count + 1))) + 10
+        return (self.x + 140, py)
+
+    def get_input_point(self, idx=0):
+        py = self.y + int((idx + 1) * (50 / (self.inputs_count + 1))) + 10
+        return (self.x, py)
 
 
 root = tk.Tk()
