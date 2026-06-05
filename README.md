@@ -1,228 +1,122 @@
-# 🎛️ Ternary Logic Gate Simulator
+# Ternary Logic Gate Simulator
 
-A web-based interactive simulator for **symmetric ternary logic gates** with values -1, 0, and 1. Create complex logic circuits using NOT, MAX, and MIN gates with a visual interface.
+A cross-platform simulator for symmetric ternary logic gates using values: **-1, 0, 1**
 
 ## Features
 
-- **Symmetric Ternary Logic**: Values of -1 (false), 0 (unknown/neutral), and 1 (true)
-- **Three Gate Types**:
-  - **NOT**: Inverts the input value (-1→1, 0→0, 1→-1)
-  - **MAX**: Returns the maximum of all inputs
-  - **MIN**: Returns the minimum of all inputs
-- **Visual Circuit Editor**: Drag gates, draw connections, and see real-time evaluation
-- **Interactive Input Controls**: Adjust input values with sliders
-- **Live State Display**: See all gate outputs and circuit values in real-time
-- **Cross-Platform**: Runs on Linux, Windows, and macOS
+- **Ternary Logic Gates** supporting symmetric values (-1, 0, 1)
+  - **AND**: Minimum of inputs
+  - **OR**: Maximum of inputs
+  - **XOR**: Sum modulo 3, mapped to {-1, 0, 1}
+  - **NOT**: Negates the input
+  - **MIN**: Returns the minimum value
+  - **MAX**: Returns the maximum value
+  - **SUM**: Sums inputs, clamped to {-1, 0, 1}
 
-## Installation & Usage
+- **Circuit Building**: Add multiple gates sequentially
+- **Simulation**: Set input values and evaluate the circuit
+- **Cross-Platform**: Runs on Windows, Linux, and macOS (CLI)
 
-### Prerequisites
-- Any modern web browser (Chrome, Firefox, Safari, Edge)
-- Python 3 (for local server - included on most systems)
-- Node.js (optional, for testing)
+## Building
 
-### Quick Start
+### Requirements
+- Rust 1.70+
+- Cargo
 
-#### Option 1: Use Python's Built-in Server (Recommended - No Installation)
-
-**Linux & macOS:**
-```bash
-cd Ternary_logic_gates-sim
-python3 -m http.server 8000
-# Open browser to http://localhost:8000
-```
-
-**Windows:**
-```bash
-cd Ternary_logic_gates-sim
-python -m http.server 8000
-# Open browser to http://localhost:8000
-```
-
-#### Option 2: Use Node.js & npm
-```bash
-npm install
-npm run serve
-# Open browser to http://localhost:8000
-```
-
-#### Option 3: Direct File Access
-Simply open `index.html` in your web browser directly (file protocol):
-- Double-click `index.html` or
-- Drag `index.html` into your browser window
-
-## Usage Guide
-
-### Creating Gates
-1. Click **"Add NOT Gate"**, **"Add MAX Gate"**, or **"Add MIN Gate"** buttons
-2. Gates appear in the canvas area
-
-### Managing Inputs & Outputs
-- Click **"Add Input"** to create an input terminal
-- Click **"Add Output"** to create an output terminal
-- Use the sliders to set input values (-1, 0, or 1)
-
-### Drawing Connections
-1. **Click and drag** from an input (red dot) to a gate or output
-2. **Click and drag** from a gate to another gate or output
-3. Connections appear as red lines with curves
-
-### Interacting with Gates
-- **Move**: Click and drag any gate to reposition it
-- **Delete**: Right-click on a gate to remove it
-- **See Values**: Gate outputs are displayed in the center of each gate
-
-### Real-Time Evaluation
-- The circuit evaluates automatically when you:
-  - Change an input value
-  - Draw a new connection
-  - Move or modify gates
-
-### Viewing Circuit State
-- The right sidebar shows:
-  - Current input values
-  - All gate outputs
-  - All output values
-  - Number of active connections
-
-## Ternary Logic Tables
-
-### NOT Gate (1 input)
-| Input | Output |
-|-------|--------|
-| -1    | 1      |
-| 0     | 0      |
-| 1     | -1     |
-
-### MAX Gate (2+ inputs)
-| Inputs  | Output |
-|---------|--------|
-| -1, -1  | -1     |
-| -1, 0   | 0      |
-| -1, 1   | 1      |
-| 0, 1    | 1      |
-| -1,0,1  | 1      |
-
-### MIN Gate (2+ inputs)
-| Inputs  | Output |
-|---------|--------|
-| -1, -1  | -1     |
-| -1, 0   | -1     |
-| 0, 1    | 0      |
-| 1, 1    | 1      |
-| -1,0,1  | -1     |
-
-## Testing
-
-Run the comprehensive test suite:
+### Compile
 
 ```bash
-node test.js
+cargo build --release
 ```
 
-Expected output:
-```
-✓ All tests passed!
+The compiled binary will be at:
+- `target/release/ternary-logic-sim` (Linux/macOS)
+- `target/release/ternary-logic-sim.exe` (Windows)
+
+## Running
+
+```bash
+cargo run --release
 ```
 
-Tests cover:
-- Individual gate logic (NOT, MAX, MIN)
-- Circuit integration
-- Input/output connections
-- Value clamping
+Or execute the binary directly:
+
+```bash
+./target/release/ternary-logic-sim
+```
+
+## Usage
+
+The simulator provides an interactive CLI menu:
+
+1. **Add Gate**: Choose a gate type and add it to the circuit
+2. **Simulate**: Set input values (A, B, C) and evaluate
+3. **View Circuit**: Display current circuit configuration
+4. **Clear Circuit**: Reset and start over
+5. **Exit**: Quit the program
+
+### Example Session
+
+```
+1) Add gate
+  - Select AND gate
+  
+2) Add gate
+  - Select OR gate
+  
+3) Simulate
+  - Input A: 1
+  - Input B: 0
+  - Input C: -1
+  - Outputs are displayed
+  
+4) View circuit
+  - Shows all gates in the circuit
+```
+
+## Gate Definitions
+
+For inputs **x, y, z** with values in **{-1, 0, 1}**:
+
+| Gate | Operation | Example |
+|------|-----------|---------|
+| AND  | min(x, y) | AND(1, -1) = -1 |
+| OR   | max(x, y) | OR(1, -1) = 1 |
+| XOR  | sum mod 3 | XOR(1, 1) = -1 |
+| NOT  | -x | NOT(1) = -1 |
+| MIN  | minimum | MIN(1, 0, -1) = -1 |
+| MAX  | maximum | MAX(1, 0, -1) = 1 |
+| SUM  | clamp(sum) | SUM(1, 1) = 1, SUM(1, 1, 1) = 1 |
 
 ## Project Structure
 
 ```
 Ternary_logic_gates-sim/
-├── index.html          # Main web interface
-├── test.js             # Test suite (Node.js)
-├── package.json        # Project metadata
-├── README.md           # This file
-└── src/
-    ├── logic.js        # Core ternary gate logic
-    └── renderer.js     # Canvas-based visual renderer
+├── src/
+│   ├── lib.rs          # Gate logic and circuit implementation
+│   └── main.rs         # CLI interface
+├── Cargo.toml          # Project manifest
+└── README.md           # This file
 ```
 
-## Browser Compatibility
+## Ternary Logic
 
-- ✅ Chrome/Chromium 90+
-- ✅ Firefox 88+
-- ✅ Safari 14+
-- ✅ Edge 90+
-- ✅ Opera 76+
+This project implements symmetric ternary logic (also known as balanced ternary):
+- **-1**: False/Low/Negative
+- **0**: Unknown/Neutral/Zero
+- **1**: True/High/Positive
 
-## Keyboard & Mouse Controls
+## Requirements
 
-| Control | Action |
-|---------|--------|
-| Click & Drag | Move gates or draw connections |
-| Right Click | Delete gate |
-| Scroll | Pan canvas (if implemented) |
-| Sliders | Adjust input values |
+- **Rust**: 1.70 or later
+- **Cargo**: Latest version
 
-## Architecture
-
-### Logic Layer (`logic.js`)
-- `TernaryGate`: Implements NOT, MAX, MIN operations
-- `TernaryCircuit`: Manages gates, inputs, outputs, and connections
-- Evaluates circuit state asynchronously
-
-### Rendering Layer (`renderer.js`)
-- `CanvasRenderer`: Draws gates, connections, and terminals
-- Handles mouse interactions (dragging, connecting, selecting)
-- Real-time animation loop
-
-### UI Layer (`index.html`)
-- Responsive layout with sidebar controls
-- Input value sliders
-- Real-time state display
-- Modern dark theme
-
-## Performance
-
-- Supports 100+ gates and connections
-- 60 FPS rendering on modern browsers
-- No external dependencies required
-- Minimal memory footprint (<5MB)
-
-## Future Enhancements
-
-- [ ] Save/Load circuit designs as JSON
-- [ ] Undo/Redo functionality
-- [ ] Zoom and pan controls
-- [ ] Custom gate definitions
-- [ ] Export circuit as image
-- [ ] Keyboard shortcuts
-- [ ] Simulation speed controls
-- [ ] Truth table generator
-
-## Troubleshooting
-
-### Port Already in Use
-If port 8000 is already in use:
-```bash
-python3 -m http.server 8001  # Use port 8001 instead
-```
-
-### Gates Not Responding
-- Check browser console for errors (F12)
-- Refresh the page (Ctrl+R or Cmd+R)
-- Clear browser cache
-
-### Connections Not Working
-- Ensure you're dragging from a valid start point
-- Check that both elements are on screen
-- Right-click near wires to debug (shows connections in state display)
+No external GUI dependencies for the CLI version.
 
 ## License
 
-MIT License - Feel free to use, modify, and distribute
+MIT License
 
-## Contributing
+## Author
 
-Found a bug? Have a suggestion? Feel free to create an issue or submit a pull request!
-
----
-
-**Enjoy exploring ternary logic! 🚀**
+Copilot Code Assistant

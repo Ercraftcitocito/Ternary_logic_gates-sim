@@ -1,0 +1,11 @@
+[package]
+name = "ternary-logic-sim"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "ternary-logic-sim"
+path = "src/main.rs"
+
+[dependencies]
+
