@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ternary Logic Gate Simulator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0d0d0d;
+      color: #ffffff;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    .header {
+      background-color: #1a1a1a;
+      padding: 15px 20px;
+      border-bottom: 2px solid #333;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .header p {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .canvas-area {
+      flex: 1;
+      position: relative;
+      background-color: #1e1e1e;
+    }
+
+    #canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+    }
+
+    .sidebar {
+      width: 280px;
+      background-color: #1a1a1a;
+      border-left: 2px solid #333;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar-section {
+      padding: 15px;
+      border-bottom: 1px solid #333;
+    }
+
+    .sidebar-section h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #4db8ff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    button {
+      padding: 10px 15px;
+      background-color: #333;
+      border: 1px solid #555;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background-color: #444;
+      border-color: #777;
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button.gate-btn {
+      font-weight: bold;
+    }
+
+    button.gate-btn.not {
+      border-left: 3px solid #9c27b0;
+    }
+
+    button.gate-btn.max {
+      border-left: 3px solid #2196f3;
+    }
+
+    button.gate-btn.min {
+      border-left: 3px solid #4caf50;
+    }
+
+    .input-control {
+      margin-bottom: 15px;
+      padding: 10px;
+      background-color: #222;
+      border-radius: 4px;
+    }
+
+    .input-control label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 5px;
+      color: #999;
+    }
+
+    .input-control input {
+      width: 100%;
+      padding: 6px;
+      background-color: #333;
+      border: 1px solid #555;
+      color: #fff;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    .input-control input:focus {
+      outline: none;
+      border-color: #4db8ff;
+      box-shadow: 0 0 8px rgba(77, 184, 255, 0.3);
+    }
+
+    .state-display {
+      padding: 10px;
+      background-color: #222;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .state-item {
+      margin-bottom: 8px;
+      padding: 5px;
+      background-color: #2a2a2a;
+      border-left: 2px solid #4db8ff;
+    }
+
+    .state-label {
+      color: #4db8ff;
+      font-weight: bold;
+    }
+
+    .state-value {
+      color: #90ee90;
+      font-weight: bold;
+    }
+
+    .info-box {
+      padding: 10px;
+      background-color: #222;
+      border-left: 3px solid #ff9800;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .info-box strong {
+      color: #ff9800;
+    }
+
+    .controls-info {
+      padding: 10px;
+      background-color: #222;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .controls-info p {
+      margin-bottom: 5px;
+      color: #aaa;
+    }
+
+    .controls-info code {
+      background-color: #1a1a1a;
+      padding: 2px 4px;
+      border-radius: 2px;
+      color: #4db8ff;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #1a1a1a;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #444;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    .footer {
+      background-color: #1a1a1a;
+      padding: 10px 20px;
+      border-top: 1px solid #333;
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⚙️ Ternary Logic Gate Simulator</h1>
+      <p>Symmetric ternary logic: -1 (false), 0 (unknown), 1 (true)</p>
+    </div>
+
+    <div class="main-content">
+      <div class="canvas-area">
+        <canvas id="canvas"></canvas>
+      </div>
+
+      <div class="sidebar">
+        <!-- Gate Creation -->
+        <div class="sidebar-section">
+          <h3>🔧 Create Gates</h3>
+          <div class="button-group">
+            <button class="gate-btn not" onclick="addGate('NOT')">Add NOT Gate</button>
+            <button class="gate-btn max" onclick="addGate('MAX')">Add MAX Gate</button>
+            <button class="gate-btn min" onclick="addGate('MIN')">Add MIN Gate</button>
+          </div>
+        </div>
+
+        <!-- Circuit Management -->
+        <div class="sidebar-section">
+          <h3>📌 Circuit</h3>
+          <div class="button-group">
+            <button onclick="addInput()">Add Input</button>
+            <button onclick="addOutput()">Add Output</button>
+            <button onclick="clearCircuit()" style="background-color: #8b0000; border-color: #c00;">
+              Clear All
+            </button>
+          </div>
+        </div>
+
+        <!-- Input Controls -->
+        <div class="sidebar-section">
+          <h3>📥 Input Values</h3>
+          <div id="inputControls" class="button-group"></div>
+        </div>
+
+        <!-- State Display -->
+        <div class="sidebar-section">
+          <h3>📊 Circuit State</h3>
+          <div id="stateDisplay" class="state-display"></div>
+        </div>
+
+        <!-- Info -->
+        <div class="sidebar-section">
+          <div class="info-box">
+            <strong>💡 Ternary Values:</strong><br>
+            -1 = False<br>
+            0 = Unknown<br>
+            1 = True
+          </div>
+        </div>
+
+        <!-- Controls Info -->
+        <div class="sidebar-section">
+          <div class="controls-info">
+            <p><strong>Controls:</strong></p>
+            <p>🖱️ <code>Drag</code> gates to move</p>
+            <p>🔗 <code>Click & Drag</code> to connect</p>
+            <p>❌ <code>Right Click</code> to delete gate</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>Ternary Logic Gates Simulator v1.0 | Left-click and drag connections between gates, inputs, and outputs</span>
+    </div>
+  </div>
+
+  <script src="src/logic.js"></script>
+  <script src="src/renderer.js"></script>
+  <script>
+    let circuit = new TernaryCircuit();
+    let renderer = null;
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      const canvas = document.getElementById('canvas');
+      renderer = new CanvasRenderer(canvas);
+      renderer.setCircuit(circuit);
+
+      // Set canvas size
+      function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        renderer.render();
+      }
+
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      // Initial setup
+      addInput();
+      addInput();
+      addOutput();
+
+      // Start render loop
+      function animationLoop() {
+        renderer.render();
+        requestAnimationFrame(animationLoop);
+      }
+      animationLoop();
+
+      updateStateDisplay();
+    });
+
+    function addGate(type) {
+      circuit.addGate(type);
+      circuit.evaluate();
+      updateStateDisplay();
+      renderer.recalculateLayout();
+    }
+
+    function addInput() {
+      circuit.addInput();
+      updateStateDisplay();
+      renderer.recalculateLayout();
+      updateInputControls();
+    }
+
+    function addOutput() {
+      circuit.addOutput();
+      updateStateDisplay();
+      renderer.recalculateLayout();
+    }
+
+    function clearCircuit() {
+      if (confirm('Are you sure? This will remove all gates, inputs, and outputs.')) {
+        circuit = new TernaryCircuit();
+        renderer.setCircuit(circuit);
+        updateInputControls();
+        updateStateDisplay();
+      }
+    }
+
+    function updateInputControls() {
+      const container = document.getElementById('inputControls');
+      container.innerHTML = '';
+
+      circuit.inputs.forEach((input, idx) => {
+        const div = document.createElement('div');
+        div.className = 'input-control';
+        div.innerHTML = `
+          <label>Input ${idx + 1}</label>
+          <input
+            type="range"
+            min="-1"
+            max="1"
+            step="1"
+            value="${input.value}"
+            onchange="circuit.setInputValue('${input.id}', parseInt(this.value)); circuit.evaluate(); updateStateDisplay();"
+          />
+          <div style="text-align: center; color: #4db8ff; margin-top: 5px;">
+            <span id="value_${input.id}">${input.value}</span>
+          </div>
+        `;
+        container.appendChild(div);
+
+        // Update display value when slider changes
+        const input_elem = div.querySelector('input');
+        input_elem.addEventListener('input', (e) => {
+          document.getElementById(`value_${input.id}`).textContent = e.target.value;
+        });
+      });
+    }
+
+    function updateStateDisplay() {
+      const container = document.getElementById('stateDisplay');
+      const state = circuit.getState();
+
+      let html = '';
+
+      // Inputs
+      if (state.inputs.length > 0) {
+        html += '<div class="state-item"><span class="state-label">INPUTS:</span></div>';
+        state.inputs.forEach((input, idx) => {
+          html += `<div class="state-item">${input.id}: <span class="state-value">${input.value}</span></div>`;
+        });
+      }
+
+      // Gates
+      if (state.gates.length > 0) {
+        html += '<div class="state-item"><span class="state-label">GATES:</span></div>';
+        state.gates.forEach(gate => {
+          html += `<div class="state-item">${gate.type} (${gate.id}): <span class="state-value">${gate.output}</span></div>`;
+        });
+      }
+
+      // Outputs
+      if (state.outputs.length > 0) {
+        html += '<div class="state-item"><span class="state-label">OUTPUTS:</span></div>';
+        state.outputs.forEach(output => {
+          html += `<div class="state-item">${output.id}: <span class="state-value">${output.value}</span></div>`;
+        });
+      }
+
+      // Connections
+      if (state.connections.length > 0) {
+        html += '<div class="state-item"><span class="state-label">CONNECTIONS:</span></div>';
+        html += `<div class="state-item">${state.connections.length} wire(s) connected</div>`;
+      }
+
+      container.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
